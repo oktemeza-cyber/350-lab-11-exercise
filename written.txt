@@ -1,2 +1,8 @@
-2a.
+2a. the regular main.cpp averages around 390-440 fps while the particles are being drawn. The main_nobatch.cpp 
+while running averages at about 360-410 fps--even a stutter appearing at 290 fps.
+
 2b.
+There is a tracked drawingorder in which particle spawns in first to the other. We can take advantnage of this 
+and use the built in OpenGL GL_DEPTH_BUFFER_BIT and glEnable(GL_DEPTH_TEST) to give a depth amount depending on 
+when that particle was drawn and it's distance to another particle drawn before or after. By doing this to every pixel, 
+we can give depth to our particles.
