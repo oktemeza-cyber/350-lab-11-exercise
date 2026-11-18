@@ -25,8 +25,20 @@ public:
         : mVertices(sf::PrimitiveType::Triangles),
           mNumSprites{0},
           mAtlas(atlasSize, padding),
-          mShader(std::filesystem::path{"main_sfml.vert"}, std::filesystem::path{"main.frag"}) {
-        // TODO
+          mShader(std::filesystem::path{"main.vert"}, std::filesystem::path{"main.frag"}) {
+        GLuint program = mShader.getNativeHandle();
+
+        mPositionAttribLocation = glCheck(glGetAttribLocation(program, "position"));
+        mTexCoordsAttribLocation = glCheck(glGetAttribLocation(program, "texCoords"));
+        mSpriteNumberAttribLocation = glCheck(glGetAttribLocation(program, "spriteNumber"));
+
+        mTextureUniformLocation = glCheck(glGetUniformLocation(program, "texture"));
+        mTransformsUniformLocation = glCheck(glGetUniformLocation(program, "transforms"));
+        mNumTransformsUniformLocation = glCheck(glGetUniformLocation(program, "numTransforms"));
+
+        glCheck(glGenBuffers(1, &mVerticesVBO));
+        glCheck(glGenBuffers(1, &mSpriteNumberVBO));
+        glCheck(glGenTextures(1, &mTransformsTexture));
     }
 
     
@@ -57,8 +69,12 @@ public:
 
         mTransforms.emplace_back();
         ++mNumSprites;
-        return id;
 
+        for(int i = 0; i < 6; ++i){
+            mSpriteNumbers.push_back(static_cast<float>(id));
+        }
+        
+        return id;
      };
 
     
@@ -103,8 +119,50 @@ public:
         target.draw(temp, states);
     };
 
+    
     // TODO
-    void drawGL() {};
+    void drawGL() {
+
+        glCheck(glUseProgram(mShader.getNativeHandle()));
+        glCheck(glBindBuffer(GL_ARRAY_BUFFER, mVerticesVBO));
+        glCheck(glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(mVertices.getVertexCount() * sizeof(sf::Vertex)), &mVertices[0], GL_DYNAMIC_DRAW));
+
+        glCheck(glVertexAttribPointer(mPositionAttribLocation, 2, GL_FLOAT, GL_FALSE, sizeof(sf::Vertex), (void*)0));
+        glCheck(glVertexAttribPointer(mTexCoordsAttribLocation, 2, GL_FLOAT, GL_FALSE, sizeof(sf::Vertex), (void*)12));
+        glCheck(glEnableVertexAttribArray(mPositionAttribLocation));
+        glCheck(glEnableVertexAttribArray(mTexCoordsAttribLocation));
+
+        glCheck(glBindBuffer(GL_ARRAY_BUFFER, mSpriteNumberVBO));
+        glCheck(glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(mSpriteNumbers.size() * sizeof(float)), mSpriteNumbers.data(), GL_DYNAMIC_DRAW));
+        glCheck(glVertexAttribPointer(mSpriteNumberAttribLocation, 1, GL_FLOAT, GL_FALSE, 0, (void*)0));
+        glCheck(glEnableVertexAttribArray(mSpriteNumberAttribLocation));
+
+        
+        glCheck(glActiveTexture(GL_TEXTURE0));
+        glCheck(glBindTexture(GL_TEXTURE_1D, mTransformsTexture));
+        glCheck(glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA32F_ARB, static_cast<GLsizei>(mTransforms.size()), 0, GL_RGBA, GL_FLOAT, mTransforms.data()));
+        glCheck(glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+        glCheck(glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+
+        glCheck(glActiveTexture(GL_TEXTURE1));
+        sf::Texture::bind(&mAtlas.getTexture());
+
+        glCheck(glUniform1i(mTransformsUniformLocation, 0));
+        glCheck(glUniform1i(mTextureUniformLocation, 1));
+        glCheck(glUniform1i(mNumTransformsUniformLocation, static_cast<GLint>(mTransforms.size())));
+
+        glCheck(glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(mVertices.getVertexCount())));
+
+     
+
+
+    };
+
+       ~SpriteManager() {
+            glDeleteBuffers(1, &mVerticesVBO);
+            glDeleteBuffers(1, &mSpriteNumberVBO);
+            glDeleteTextures(1, &mTransformsTexture);
+        }
 
     
     BasicTransform& getTransform(SpriteID id) { return mTransforms[id]; }

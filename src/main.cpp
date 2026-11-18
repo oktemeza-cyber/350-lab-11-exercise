@@ -62,7 +62,7 @@ int main() {
     settings.minorVersion = 1;
     sf::RenderWindow window(sf::VideoMode({1280, 720}), "Particles", sf::State::Windowed, settings);
     (void)window.setActive();  // set window as OpenGL target
-    // window.setMouseCursorVisible(false); // hide cursor
+    window.setMouseCursorVisible(false); // hide cursor
 
     if (!gladLoadGLLoader((GLADloadproc)sf::Context::getFunction)) {
         // Handle GLAD initialization error
@@ -184,15 +184,15 @@ int main() {
         }
 
         // UNCOMMENT THIS ONCE YOU'RE WORKING ON "Batched rendering (part 2)"
-        // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        // spriteManager.drawGL();
+         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+         spriteManager.drawGL();
         // DOWN TO HERE
 
         // COMMENT THIS BLOCK ONCE YOU'RE WORKING ON "Batched rendering (part 2)"
-        window.clear(sf::Color::Black);
-        sf::RenderStates states{};
-        states.blendMode = sf::BlendAdd;
-        spriteManager.draw(window, states);
+        // window.clear(sf::Color::Black);
+        // sf::RenderStates states{};
+        // states.blendMode = sf::BlendAdd;
+        // spriteManager.draw(window, states);
         // DOWN TO HERE
 
         window.display();
